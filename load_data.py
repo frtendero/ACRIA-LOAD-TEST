@@ -34,14 +34,14 @@ print(tf.test.is_built_with_cuda())     # True if GPU CUDA support
 #       data
 #       |______ label1: [l1_img_1, l1_img_2, ...]
 #       |______ labelN: [l1_img_1, l2_img_2, ...]
-# 
+#
 # However, current structure is:
 #       Images
 #       |------ img1, img2, ...
 # And in a separate excel file, labels are noted as:
 #       |------ labels.xls: (img_number, label)
-# 
-# Either way, the OBJETIVE is to return, with an implemented process_path() function, 
+#
+# Either way, the OBJETIVE is to return, with an implemented process_path() function,
 # a TUPLE with the decoded image as a tensor, and its label: (IMAGE, LABEL)
 
 # ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -59,7 +59,7 @@ IMG_HEIGHT, IMG_WIDTH = 1288, 1288  # pixels
 # TODO: Implement in order to get labels from xls tf.data.csv
 def get_label(labels_path, n_images=None):
     """ Retrieve a dataframe with the Image ID and its corresponding label """
-    
+
     # Read xls file:
     read_data = pd.read_excel('labels.xlsx')
     labels_df = read_data[['Classification', 'idImage']]
@@ -75,35 +75,35 @@ def get_label(labels_path, n_images=None):
 
 
 def decode_image(img):
-    
+
     # Conver the compressed string to a 3D uint8 tensor
     img = tf.image.decode_jpeg(img, channels=3)
-    
+
     # Conver to floats in a [0, 1] scaled range (same effect as typical ./255)
     img = tf.image.convert_image_dtype(img, tf.float32)
-    
+
     # resize image to desired size
     return tf.image.resize(img, [IMG_WIDTH, IMG_HEIGHT])
 
 
 def process_path(file_path):
-    
+
     # Load label from the name of the image (number)
     # print(str(file_path))
     labels_df = get_label("labels.xlsx")
     # NOTE: This is a dataframe with all albel and images!
-    
+
     # Load the raw data from the file as string
     img = tf.io.read_file(file_path)
-    
+
     # TODO: FROM HERE: HOW TO DETECT THE IMAGE NAME? File path is a tensor!
     print(f"File path: {file_path.list_files.take(1).numpy()}")
-    
+
     label = labels_df[labels_df["idImage"] == file_path]   #TODO: IS FILEPATH THE IMAGE ID?
-    
+
     # decode the 'jpeg' image using the implemented function above
     img = decode_image(img)
-    
+
     # return the pair of 'decoded image' & 'label'
     return img, label
 
@@ -125,6 +125,6 @@ labeled_ds = list_ds.map(process_path, num_parallel_calls=AUTOTUNE)
 
 # TODO:
 # - Pass excel as arguments
-# - Transform labels data frame to a tensorflow dataset, in order to perform the 
+# - Transform labels data frame to a tensorflow dataset, in order to perform the
 #   image id and label mapping with better performance.
 # - Program a script to transfrom file structure to data/{label1, label2, ..}/{1, 2, 3, ...}
